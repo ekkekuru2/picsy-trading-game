@@ -1,0 +1,1428 @@
+<title>PICSY 貿易ゲーム</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Old+Mincho:wght@500;700&family=Zen+Kaku+Gothic+New:wght@400;500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+
+<style>
+  :root {
+    --paper:      #e8ebe3;
+    --surface:    #f5f7f1;
+    --surface-2:  #eef1e9;
+    --rule:       #c6cfbe;
+    --grid:       rgba(26, 35, 40, 0.055);
+    --ink:        #1a2328;
+    --ink-soft:   #5d6d70;
+    --ink-faint:  #8d9a98;
+    --flow:       #15616d;
+    --flow-soft:  rgba(21, 97, 109, 0.12);
+    --brass:      #9a6612;
+    --brass-soft: rgba(154, 102, 18, 0.12);
+    --gain:       #2c6a43;
+    --loss:       #9c3a2c;
+    --shadow:     0 1px 0 rgba(26, 35, 40, 0.06);
+
+    --mincho: "Zen Old Mincho", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    --gothic: "Zen Kaku Gothic New", "Hiragino Sans", "Yu Gothic", sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --paper:      #11171a;
+      --surface:    #1a2226;
+      --surface-2:  #202a2e;
+      --rule:       #31403f;
+      --grid:       rgba(222, 236, 230, 0.05);
+      --ink:        #e4ece7;
+      --ink-soft:   #9bacaa;
+      --ink-faint:  #6d7f7d;
+      --flow:       #56c2d1;
+      --flow-soft:  rgba(86, 194, 209, 0.16);
+      --brass:      #d7a24c;
+      --brass-soft: rgba(215, 162, 76, 0.16);
+      --gain:       #64c08a;
+      --loss:       #e0806f;
+      --shadow:     0 1px 0 rgba(0, 0, 0, 0.3);
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --paper:      #11171a;
+    --surface:    #1a2226;
+    --surface-2:  #202a2e;
+    --rule:       #31403f;
+    --grid:       rgba(222, 236, 230, 0.05);
+    --ink:        #e4ece7;
+    --ink-soft:   #9bacaa;
+    --ink-faint:  #6d7f7d;
+    --flow:       #56c2d1;
+    --flow-soft:  rgba(86, 194, 209, 0.16);
+    --brass:      #d7a24c;
+    --brass-soft: rgba(215, 162, 76, 0.16);
+    --gain:       #64c08a;
+    --loss:       #e0806f;
+    --shadow:     0 1px 0 rgba(0, 0, 0, 0.3);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: var(--gothic);
+    color: var(--ink);
+    background-color: var(--paper);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 26px 26px;
+    line-height: 1.6;
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding-inline: 16px;
+    padding-block: 0 56px;
+  }
+
+  /* ---------- 見出し ---------- */
+  .masthead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 12px 24px;
+    padding-block: 26px 16px;
+    border-bottom: 2px solid var(--ink);
+  }
+  .masthead h1 {
+    font-family: var(--mincho);
+    font-weight: 700;
+    font-size: clamp(1.6rem, 1.1rem + 2vw, 2.4rem);
+    letter-spacing: 0.04em;
+    margin: 0;
+    line-height: 1.15;
+    text-wrap: balance;
+  }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--flow);
+    margin: 0 0 4px;
+  }
+  .masthead .cite {
+    font-family: var(--mincho);
+    font-size: 0.82rem;
+    color: var(--ink-soft);
+    margin: 0;
+    text-align: right;
+    max-width: 24em;
+  }
+
+  /* ---------- 操作バー ---------- */
+  .deck {
+    position: sticky;
+    top: env(safe-area-inset-top, 0px);
+    z-index: 20;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px 16px;
+    padding: 10px 14px;
+    margin-block: 0 18px;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-top: none;
+    box-shadow: var(--shadow);
+  }
+  .daymark {
+    font-family: var(--mono);
+    font-size: 1.1rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    min-width: 5.2em;
+  }
+  .daymark small { display: block; font-size: 0.6rem; color: var(--ink-faint); letter-spacing: 0.18em; }
+
+  .seg { display: flex; border: 1px solid var(--rule); background: var(--paper); }
+  .seg button {
+    font: 500 0.8rem/1 var(--gothic);
+    padding: 8px 14px;
+    border: none;
+    background: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .seg button[aria-pressed="true"] { background: var(--ink); color: var(--paper); }
+
+  .gamma { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--ink-soft); }
+  .gamma input[type="range"] { width: 92px; accent-color: var(--flow); }
+  .gamma output { font-family: var(--mono); color: var(--ink); min-width: 2.4em; }
+
+  button.act {
+    font: 500 0.82rem/1 var(--gothic);
+    padding: 9px 16px;
+    border: 1px solid var(--ink);
+    background: var(--ink);
+    color: var(--paper);
+    cursor: pointer;
+  }
+  button.act:hover { background: var(--flow); border-color: var(--flow); }
+  button.act.ghost { background: none; color: var(--ink); }
+  button.act.ghost:hover { background: var(--flow-soft); color: var(--ink); border-color: var(--flow); }
+  button:focus-visible, select:focus-visible, input:focus-visible, .tab:focus-visible {
+    outline: 2px solid var(--flow);
+    outline-offset: 2px;
+  }
+  .spacer { flex: 1 1 auto; }
+
+  /* ---------- 取引コンソール ---------- */
+  .console {
+    border: 1px solid var(--rule);
+    background: var(--surface);
+    padding: 14px;
+    margin-bottom: 18px;
+    box-shadow: var(--shadow);
+  }
+  .console h2, .panel h2 {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    margin: 0 0 10px;
+    font-weight: 500;
+  }
+  .row { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 10px; }
+  .field { display: flex; flex-direction: column; gap: 3px; }
+  .field > span { font-size: 0.68rem; color: var(--ink-soft); letter-spacing: 0.06em; }
+  select, input[type="number"] {
+    font: 500 0.88rem/1.2 var(--gothic);
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 8px 10px;
+    min-height: 38px;
+  }
+  input[type="number"] { font-family: var(--mono); }
+  .w-qty { width: 72px; }
+  .w-price { width: 104px; }
+  .arrow { font-family: var(--mono); color: var(--flow); padding-bottom: 10px; font-size: 1rem; }
+
+  .console h2.second { margin-top: 18px; padding-top: 14px; border-top: 1px dashed var(--rule); }
+  .field.grow { flex: 1 1 190px; min-width: 150px; }
+  .field.grow input { width: 100%; }
+  input[type="text"] {
+    font: 500 0.88rem/1.2 var(--gothic);
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 8px 10px;
+    min-height: 38px;
+  }
+  .total {
+    font-family: var(--mono);
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: var(--brass);
+    padding-bottom: 7px;
+    font-variant-numeric: tabular-nums;
+  }
+  .recov {
+    font-size: 0.74rem;
+    color: var(--ink-soft);
+    font-family: var(--mono);
+    border-left: 2px solid var(--flow);
+    padding-left: 9px;
+  }
+
+  .notice { margin: 10px 0 0; font-size: 0.8rem; min-height: 1.4em; }
+  .notice.err { color: var(--loss); }
+  .notice.ok { color: var(--ink-soft); }
+
+  .legend {
+    margin: 12px 0 0;
+    padding-top: 10px;
+    border-top: 1px dashed var(--rule);
+    font-size: 0.74rem;
+    color: var(--ink-soft);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+  }
+  .legend b { font-family: var(--mono); color: var(--ink); font-weight: 600; }
+
+  /* ---------- 設定画面 ---------- */
+  .setup { border: 1px solid var(--rule); background: var(--surface); padding: 16px 14px 18px; margin-bottom: 18px; box-shadow: var(--shadow); }
+  .setup h2 {
+    font-family: var(--mincho);
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin: 0 0 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--rule);
+  }
+  .setup h3.sub {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    margin: 22px 0 9px;
+  }
+  .setup-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+  .opt { display: flex; flex-direction: column; gap: 6px; }
+  .opt .lab { font-size: 0.78rem; font-weight: 500; }
+  .opt .inline { display: flex; align-items: center; gap: 8px; font-size: 0.82rem; color: var(--ink-soft); }
+  .opt .inline input[type="range"] { flex: 1 1 90px; accent-color: var(--flow); }
+  .opt .inline output { font-family: var(--mono); color: var(--ink); min-width: 2.6em; }
+  .opt .inline input[type="number"] { width: 108px; }
+  .hint { font-size: 0.72rem; color: var(--ink-soft); margin: 0; line-height: 1.5; }
+  .hint b { font-family: var(--mono); color: var(--flow); font-weight: 600; }
+
+  .setup-table { width: 100%; font-family: var(--gothic); font-size: 0.78rem; }
+  .setup-table th { font-size: 0.68rem; }
+  .setup-table td { padding: 3px 4px; }
+  .setup-table td:first-child, .setup-table td:nth-child(2) { text-align: left; }
+  .setup-table input {
+    font: 500 0.8rem/1.2 var(--gothic);
+    color: var(--ink);
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    padding: 5px 6px;
+    min-height: 32px;
+    width: 100%;
+  }
+  .setup-table input[type="number"] { font-family: var(--mono); text-align: right; width: 58px; }
+  .setup-table .w-name input { width: 62px; }
+  .setup-table .w-kind input { width: 86px; }
+  .setup-table .drop {
+    font: 500 0.78rem/1 var(--gothic);
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink-soft);
+    padding: 6px 8px;
+    cursor: pointer;
+  }
+  .setup-table .drop:hover { border-color: var(--loss); color: var(--loss); }
+
+  /* ---------- 盤面 ---------- */
+  .board {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(236px, 1fr));
+    gap: 14px;
+    margin-bottom: 22px;
+  }
+  .card {
+    position: relative;
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-top: 3px solid var(--flow);
+    padding: 13px 14px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+    box-shadow: var(--shadow);
+  }
+  .card.market { border-top-color: var(--brass); background: var(--surface-2); }
+
+  .card-head { display: flex; align-items: baseline; gap: 8px; }
+  .card-head .name {
+    font-family: var(--mincho);
+    font-size: 1.5rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .card-head .kind {
+    font-size: 0.7rem;
+    color: var(--ink-soft);
+    letter-spacing: 0.08em;
+    border: 1px solid var(--rule);
+    padding: 1px 6px;
+  }
+  .card.market .kind { color: var(--brass); border-color: var(--brass); }
+
+  .money {
+    font-family: var(--mono);
+    font-size: 1.45rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.1;
+  }
+  .money span { font-size: 0.72rem; color: var(--ink-faint); margin-left: 3px; font-weight: 400; }
+
+  .meters { display: grid; gap: 5px; }
+  .meter { display: grid; grid-template-columns: 4.6em 1fr 3.2em; align-items: center; gap: 7px; font-size: 0.68rem; color: var(--ink-soft); }
+  .meter .bar { height: 5px; background: var(--paper); border: 1px solid var(--rule); position: relative; overflow: hidden; }
+  .meter .bar i { position: absolute; inset: 0 auto 0 0; background: var(--flow); display: block; }
+  .meter.budget .bar i { background: var(--brass); }
+  .meter .num { font-family: var(--mono); color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+  .meter .bar::after {
+    content: ""; position: absolute; top: 0; bottom: 0; left: 50%;
+    border-left: 1px dotted var(--ink-faint);
+  }
+  .meter.budget .bar::after { display: none; }
+
+  .items { display: flex; flex-wrap: wrap; gap: 4px; min-height: 22px; }
+  .chip {
+    font-family: var(--mono);
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink-soft);
+    white-space: nowrap;
+  }
+  .chip.goods { border-color: var(--flow); color: var(--flow); background: var(--flow-soft); }
+  .chip.none { border-style: dashed; color: var(--ink-faint); }
+
+  .acts { display: flex; flex-wrap: wrap; gap: 5px; margin-top: auto; padding-top: 3px; }
+  .mini {
+    font: 500 0.72rem/1 var(--gothic);
+    padding: 6px 8px;
+    border: 1px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink);
+    cursor: pointer;
+  }
+  .mini:hover:not(:disabled) { border-color: var(--flow); color: var(--flow); background: var(--flow-soft); }
+  .mini.sell { border-color: var(--brass); color: var(--brass); }
+  .mini.sell:hover:not(:disabled) { background: var(--brass-soft); }
+  .mini:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .delta {
+    position: absolute;
+    top: 9px;
+    right: 11px;
+    font-family: var(--mono);
+    font-size: 0.86rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    padding: 1px 6px;
+  }
+  .delta.up { color: var(--gain); background: rgba(44, 106, 67, 0.1); }
+  .delta.down { color: var(--loss); background: rgba(156, 58, 44, 0.1); }
+  @media (prefers-reduced-motion: no-preference) {
+    .delta { animation: lift 2.6s ease-out forwards; }
+    @keyframes lift {
+      0% { opacity: 0; transform: translateY(6px); }
+      12% { opacity: 1; transform: translateY(0); }
+      70% { opacity: 1; }
+      100% { opacity: 0; transform: translateY(-5px); }
+    }
+  }
+
+  /* ---------- 下段パネル ---------- */
+  .panel { border: 1px solid var(--rule); background: var(--surface); box-shadow: var(--shadow); }
+  .tabs { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--rule); }
+  .tab {
+    font: 500 0.8rem/1 var(--gothic);
+    padding: 11px 16px;
+    border: none;
+    border-right: 1px solid var(--rule);
+    background: none;
+    color: var(--ink-soft);
+    cursor: pointer;
+  }
+  .tab[aria-selected="true"] { background: var(--paper); color: var(--ink); box-shadow: inset 0 -2px 0 var(--flow); }
+  .pane { padding: 16px 14px; }
+  .pane p.note { font-size: 0.78rem; color: var(--ink-soft); margin: 0 0 12px; max-width: 62ch; }
+  .pane p.note code { font-family: var(--mono); color: var(--flow); }
+
+  .scroll { overflow-x: auto; }
+  table { border-collapse: collapse; font-family: var(--mono); font-size: 0.74rem; font-variant-numeric: tabular-nums; }
+  th, td { padding: 4px 7px; text-align: right; white-space: nowrap; border: 1px solid var(--rule); }
+  thead th { color: var(--ink-soft); font-weight: 500; background: var(--surface-2); }
+  tbody th { text-align: left; color: var(--ink); font-weight: 600; background: var(--surface-2); }
+  td.cell { position: relative; color: var(--ink); min-width: 3.6em; }
+  td.cell i { position: absolute; inset: 0; background: var(--flow); display: block; }
+  td.cell span { position: relative; }
+  td.zero { color: var(--ink-faint); }
+  td.bankcol i { background: var(--brass); }
+  th.bankcol, td.bankcol { border-left-width: 2px; border-right-width: 2px; border-left-color: var(--brass); border-right-color: var(--brass); }
+  tr.bankrow th, tr.bankrow td { background: var(--surface-2); }
+
+  .cvec { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+  .cvec div {
+    font-family: var(--mono);
+    font-size: 0.74rem;
+    border: 1px solid var(--rule);
+    padding: 3px 8px;
+    background: var(--paper);
+  }
+  .cvec b { color: var(--flow); font-weight: 600; }
+
+  .compare { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+  .rank { border: 1px solid var(--rule); background: var(--paper); }
+  .rank h3 {
+    font: 500 0.74rem/1 var(--gothic);
+    letter-spacing: 0.08em;
+    margin: 0;
+    padding: 9px 11px;
+    border-bottom: 1px solid var(--rule);
+    color: var(--ink-soft);
+  }
+  .rank.picsy h3 { color: var(--flow); box-shadow: inset 3px 0 0 var(--flow); }
+  .rank ol { list-style: none; margin: 0; padding: 6px 0; }
+  .rank li {
+    display: grid;
+    grid-template-columns: 1.8em 1fr auto auto;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 11px;
+    font-size: 0.84rem;
+  }
+  .rank li .pos { font-family: var(--mono); color: var(--ink-faint); font-size: 0.74rem; }
+  .rank li .who { font-family: var(--mincho); font-size: 1.05rem; font-weight: 700; }
+  .rank li .amt { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+  .rank li .mv { font-family: var(--mono); font-size: 0.7rem; width: 2.6em; text-align: right; }
+  .rank li .mv.up { color: var(--gain); }
+  .rank li .mv.down { color: var(--loss); }
+
+  .log { list-style: none; margin: 0; padding: 0; max-height: 320px; overflow-y: auto; font-size: 0.82rem; }
+  .log li { display: flex; gap: 10px; padding: 5px 2px; border-bottom: 1px dashed var(--rule); }
+  .log li:last-child { border-bottom: none; }
+  .log .d { font-family: var(--mono); font-size: 0.7rem; color: var(--ink-faint); flex: 0 0 3.6em; padding-top: 2px; }
+
+  .ref { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 14px; }
+  .ref article { border: 1px solid var(--rule); background: var(--paper); padding: 12px; }
+  .ref-head {
+    font-family: var(--mono);
+    font-size: 0.68rem;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--ink-faint);
+    font-weight: 500;
+    margin: 24px 0 8px;
+  }
+  .ref h3 { font-family: var(--mincho); font-size: 1.1rem; margin: 0 0 2px; }
+  .ref .price { font-family: var(--mono); font-size: 1.1rem; color: var(--brass); font-weight: 600; }
+  .ref dl { margin: 9px 0 0; font-size: 0.76rem; display: grid; grid-template-columns: 4.6em 1fr; gap: 3px 8px; }
+  .ref dt { color: var(--ink-soft); }
+  .ref dd { margin: 0; }
+  .priceedit { display: flex; align-items: center; gap: 6px; margin-top: 10px; font-size: 0.72rem; color: var(--ink-soft); }
+  .priceedit input { width: 82px; }
+
+  footer.colophon {
+    margin-top: 26px;
+    padding-top: 14px;
+    border-top: 1px solid var(--rule);
+    font-size: 0.76rem;
+    color: var(--ink-soft);
+    max-width: 68ch;
+  }
+  footer.colophon code { font-family: var(--mono); color: var(--flow); }
+
+  @media (max-width: 560px) {
+    .masthead .cite { text-align: left; }
+    .daymark { min-width: 0; }
+    .board { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <div>
+      <p class="eyebrow">Propagational Investment Currency System</p>
+      <h1>PICSY 貿易ゲーム</h1>
+    </div>
+    <p class="cite">鈴木健『なめらかな社会とその敵』第3章のワークショップを、<br>第4章4.4節の中央銀行法そのままの評価行列で動かす</p>
+  </header>
+
+  <div class="deck" id="deck">
+    <div class="daymark"><small>TRADES</small><span id="trade-count">0回</span></div>
+    <div class="recov" id="recov"></div>
+
+    <div class="seg" role="group" aria-label="貨幣システム">
+      <button type="button" id="mode-picsy" aria-pressed="true">PICSY</button>
+      <button type="button" id="mode-secsy" aria-pressed="false">SECSY</button>
+    </div>
+
+    <label class="gamma" id="gamma-wrap">
+      <span>自然回収率 γ</span>
+      <input type="range" id="gamma" min="0" max="0.5" step="0.05" value="0.1">
+      <output id="gamma-out">0.10</output>
+    </label>
+
+    <div class="spacer"></div>
+    <button type="button" class="act ghost" id="do-recovery">自然回収を起こす</button>
+    <button type="button" class="act ghost" id="settings">設定</button>
+    <button type="button" class="act ghost" id="reset">最初から</button>
+  </div>
+
+  <section class="setup" id="setup" hidden>
+    <h2>はじめる前に — 人数・持ち物・自然回収率を決める</h2>
+
+    <div class="setup-grid">
+      <div class="opt">
+        <span class="lab">貨幣システム</span>
+        <div class="seg" role="group" aria-label="貨幣システム">
+          <button type="button" id="su-picsy" aria-pressed="true">PICSY</button>
+          <button type="button" id="su-secsy" aria-pressed="false">SECSY</button>
+        </div>
+        <p class="hint" id="su-mode-hint"></p>
+      </div>
+
+      <div class="opt" id="su-gamma-wrap">
+        <span class="lab">自然回収率 γ</span>
+        <div class="inline">
+          <input type="range" id="su-gamma" min="0" max="0.5" step="0.05" value="0.1">
+          <output id="su-gamma-out">0.10</output>
+        </div>
+        <p class="hint">1日ごとに、使った評価がこの割合だけ予算制約 <b>E_i0</b> に戻る。0 にすると使い切りで回復しない。</p>
+      </div>
+
+      <div class="opt" id="su-every-wrap">
+        <span class="lab">自然回収のタイミング</span>
+        <div class="inline">
+          <span>取引</span>
+          <input type="number" id="su-every" min="0" max="20" step="1" value="3">
+          <span>回ごと</span>
+        </div>
+        <p class="hint" id="su-every-hint"></p>
+      </div>
+
+      <div class="opt">
+        <span class="lab">市場の初期資金</span>
+        <div class="inline">
+          <input type="number" id="su-market" min="500" step="500" value="5000"><span>ドル</span>
+        </div>
+        <p class="hint" id="su-market-hint"></p>
+      </div>
+    </div>
+
+    <h3 class="sub">参加する国と、配る物</h3>
+    <div class="scroll"><table class="setup-table" id="su-table"></table></div>
+    <p class="hint" style="margin-top:8px">ここで決めるのは<b>実際に各国へ配る物</b>の一覧で、アプリはこれを追跡しない(モノは机の上にある)。道具をもつ国と紙をもつ国を分けておかないと、貿易をする理由がなくなる。</p>
+
+    <div class="row" style="margin-top:14px">
+      <button type="button" class="mini" id="su-add">国を追加</button>
+      <button type="button" class="mini" id="su-reset">表3.1に戻す</button>
+      <div class="spacer"></div>
+      <button type="button" class="act" id="su-start">この設定ではじめる</button>
+    </div>
+    <p class="notice" id="su-notice" role="status" aria-live="polite"></p>
+  </section>
+
+  <section class="console" id="console-sec">
+    <h2>市場が買い取る — 金額は市場価格で決まる</h2>
+    <div class="row">
+      <label class="field"><span>売った国</span><select id="m-country"></select></label>
+      <label class="field"><span>財</span><select id="m-product"></select></label>
+      <label class="field"><span>個数</span><input type="number" id="m-qty" class="w-qty" min="1" step="1" value="1"></label>
+      <div class="total" id="m-total">$80</div>
+      <button type="button" class="act" id="do-buy">買い取る</button>
+    </div>
+
+    <h2 class="second">国どうしの取引 — 金額は交渉で決める</h2>
+    <div class="row">
+      <label class="field"><span>払う国</span><select id="buyer"></select></label>
+      <div class="arrow" aria-hidden="true">── 支払い ──▶</div>
+      <label class="field"><span>受け取る国</span><select id="seller"></select></label>
+      <label class="field"><span>金額(ドル)</span><input type="number" id="price" class="w-price" min="1" step="10" value="100"></label>
+      <label class="field grow"><span>何を売り買いしたか(任意)</span><input type="text" id="memo" placeholder="紙5枚とはさみ1本"></label>
+      <button type="button" class="act" id="do-trade">記録する</button>
+    </div>
+
+    <p class="notice" id="notice" role="status" aria-live="polite"></p>
+    <p class="legend">
+      <span>このアプリが追うのは<b>お金と評価行列だけ</b>。紙やはさみの受け渡しは机の上で。</span>
+    </p>
+  </section>
+
+  <section class="board" id="board" aria-label="参加国"></section>
+
+  <section class="panel" id="panel-sec">
+    <div class="tabs" role="tablist">
+      <button type="button" class="tab" role="tab" id="tab-matrix" aria-controls="pane-matrix" aria-selected="true">評価行列</button>
+      <button type="button" class="tab" role="tab" id="tab-rank" aria-controls="pane-rank" aria-selected="false">ランキング比較</button>
+      <button type="button" class="tab" role="tab" id="tab-ref" aria-controls="pane-ref" aria-selected="false">財と道具</button>
+      <button type="button" class="tab" role="tab" id="tab-log" aria-controls="pane-log" aria-selected="false">履歴</button>
+    </div>
+
+    <div class="pane" id="pane-matrix" role="tabpanel" aria-labelledby="tab-matrix"></div>
+    <div class="pane" id="pane-rank" role="tabpanel" aria-labelledby="tab-rank" hidden></div>
+    <div class="pane" id="pane-ref" role="tabpanel" aria-labelledby="tab-ref" hidden></div>
+    <div class="pane" id="pane-log" role="tabpanel" aria-labelledby="tab-log" hidden></div>
+  </section>
+
+  <footer class="colophon">
+    画面の「お金」は購買力 <code>E_i0 × c_i</code> のことで、購買力1を500ドルとして表示している(表3.1の初期所持金に合わせてある)。
+    貢献度の総和は常に N に正規化されるので、伝播の効果は金額そのものより「取引に関わっていない国との差」に表れる。
+    進行状況はこのブラウザに自動保存される。
+  </footer>
+</div>
+
+<script src="picsy.js"></script>
+<script>
+(function () {
+  'use strict';
+
+  var P = window.PICSY;
+  var SAVE_KEY = 'picsy-trading-game/v1';
+  var game = null;
+  var activeTab = 'matrix';
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  function yen(value) { return Math.round(value).toLocaleString('ja-JP'); }
+
+  function setNotice(text, isError) {
+    var el = $('notice');
+    el.textContent = text || '';
+    el.className = 'notice ' + (isError ? 'err' : 'ok');
+  }
+
+  // ---------- 保存 ----------
+  function save() {
+    try { localStorage.setItem(SAVE_KEY, JSON.stringify(game.toJSON())); } catch (e) { /* 使えなくても続行 */ }
+  }
+
+  function load() {
+    try {
+      var raw = localStorage.getItem(SAVE_KEY);
+      return raw ? P.Game.fromJSON(JSON.parse(raw)) : null;
+    } catch (e) { return null; }
+  }
+
+  function startNew(settings) {
+    game = new P.Game(settings);
+    save();
+  }
+
+  // ---------- 設定画面 ----------
+  var draft = null;
+  var view = 'setup';
+
+  function showView(name) {
+    view = name;
+    $('deck').hidden = name !== 'game';
+    $('setup').hidden = name !== 'setup';
+    $('console-sec').hidden = name !== 'game';
+    $('board').hidden = name !== 'game';
+    $('panel-sec').hidden = name !== 'game';
+    $('do-recovery').hidden = name !== 'game';
+    $('reset').hidden = name !== 'game';
+    $('settings').hidden = name !== 'game';
+    $('gamma-wrap').hidden = name !== 'game' || draft.mode !== 'picsy';
+  }
+
+  function openSetup(settings) {
+    draft = settings || P.defaultSettings();
+    renderSetup();
+    showView('setup');
+  }
+
+  function renderSetup() {
+    $('su-picsy').setAttribute('aria-pressed', String(draft.mode === 'picsy'));
+    $('su-secsy').setAttribute('aria-pressed', String(draft.mode === 'secsy'));
+    $('su-mode-hint').textContent = draft.mode === 'picsy'
+      ? '取引のたびに価値がサプライチェーンを遡って伝播する。評価行列とランキング比較が見られる。'
+      : '通常の決済貨幣。お金は残高として動くだけで、伝播も自然回収もない。';
+
+    $('su-gamma-wrap').hidden = draft.mode !== 'picsy';
+    $('su-gamma').value = String(draft.gamma);
+    $('su-gamma-out').textContent = Number(draft.gamma).toFixed(2);
+
+    $('su-every-wrap').hidden = draft.mode !== 'picsy';
+    $('su-every').value = String(draft.recoveryEvery);
+    $('su-every-hint').textContent = draft.recoveryEvery
+      ? '取引' + draft.recoveryEvery + '回ごとに自動で自然回収する。本文では「1日に1回とか1時間に1回」とあるが、ワークショップに日はないので取引の回数を時計のかわりにする。'
+      : '自動では起こさない。「自然回収を起こす」ボタンを押したときだけ。';
+
+    $('su-market').value = String(draft.marketSeats * P.INITIAL_MONEY);
+    $('su-market-hint').innerHTML = draft.mode === 'picsy'
+      ? 'PICSY では購買力が <b>E_i0 × c_i</b> で、1人分の席では500ドルが上限になる。市場は外の世界なので、' +
+        draft.marketSeats + '席ぶん(' + yen(draft.marketSeats * P.INITIAL_MONEY) + 'ドル)として行列に置く。500ドル刻み。'
+      : '市場が財を買い取るための手持ち。PICSY のときと同額にそろえてあるので、2つの貨幣システムを公平に比べられる。';
+
+    var table = $('su-table');
+    table.textContent = '';
+
+    var columns = ['国名', 'タイプ'].concat(P.TOOLS).concat([P.PAPER]);
+    var thead = document.createElement('thead');
+    var hrow = document.createElement('tr');
+    columns.forEach(function (name) {
+      var th = document.createElement('th');
+      th.textContent = name;
+      hrow.appendChild(th);
+    });
+    hrow.appendChild(document.createElement('th'));
+    thead.appendChild(hrow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    draft.countries.forEach(function (country, row) {
+      var tr = document.createElement('tr');
+
+      tr.appendChild(textCell(country.name, 'w-name', function (value) { country.name = value; }));
+      tr.appendChild(textCell(country.kind, 'w-kind', function (value) { country.kind = value; }));
+
+      P.TOOLS.concat([P.PAPER]).forEach(function (item) {
+        var td = document.createElement('td');
+        var input = document.createElement('input');
+        input.type = 'number';
+        input.min = '0';
+        input.step = '1';
+        input.id = 'su-item-' + row + '-' + item;
+        input.value = String(country.items[item] || 0);
+        input.addEventListener('input', function () {
+          var amount = Math.max(0, Math.floor(Number(input.value) || 0));
+          if (amount) country.items[item] = amount; else delete country.items[item];
+        });
+        td.appendChild(input);
+        tr.appendChild(td);
+      });
+
+      var last = document.createElement('td');
+      var drop = document.createElement('button');
+      drop.type = 'button';
+      drop.className = 'drop';
+      drop.textContent = '削除';
+      drop.disabled = draft.countries.length <= 2;
+      drop.addEventListener('click', function () {
+        draft.countries.splice(row, 1);
+        renderSetup();
+      });
+      last.appendChild(drop);
+      tr.appendChild(last);
+
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+  }
+
+  function textCell(value, className, onChange) {
+    var td = document.createElement('td');
+    td.className = className;
+    var input = document.createElement('input');
+    input.type = 'text';
+    input.value = value;
+    input.addEventListener('input', function () { onChange(input.value.trim()); });
+    td.appendChild(input);
+    return td;
+  }
+
+  function nextCountryName() {
+    var used = {};
+    draft.countries.forEach(function (c) { used[c.name] = true; });
+    for (var code = 65; code < 91; code++) {
+      var name = String.fromCharCode(code);
+      if (!used[name]) return name;
+    }
+    return '国' + (draft.countries.length + 1);
+  }
+
+  // ---------- 盤面 ----------
+  function renderBoard() {
+    var board = $('board');
+    var effect = {};
+    (game.lastEffect || []).forEach(function (row) { effect[row.index] = row.delta; });
+    board.textContent = '';
+
+    game.players.forEach(function (player, index) {
+      var card = document.createElement('div');
+      card.className = 'card' + (player.isMarket ? ' market' : '');
+
+      var head = document.createElement('div');
+      head.className = 'card-head';
+      head.innerHTML = '<span class="name"></span><span class="kind"></span>';
+      head.querySelector('.name').textContent = player.name;
+      head.querySelector('.kind').textContent = player.kind;
+      card.appendChild(head);
+
+      var money = document.createElement('div');
+      money.className = 'money';
+      money.innerHTML = yen(game.money(index)) + '<span>ドル</span>';
+      card.appendChild(money);
+
+      if (game.currency.kind === 'picsy') {
+        // 市場は複数の席を占めるので、席数で割って1席あたりの大きさで見せる
+        var seats = game.seatsOf[index].length;
+        var c = game.currency.contribution(index);
+        var b = game.currency.budget(index);
+        var meters = document.createElement('div');
+        meters.className = 'meters';
+        meters.appendChild(meter('貢献度 c', Math.min(c / (2 * seats), 1), c.toFixed(3), ''));
+        meters.appendChild(meter('予算 E₍i0₎', b, b.toFixed(3), 'budget'));
+        card.appendChild(meters);
+      }
+
+      var delta = effect[index];
+      if (delta) {
+        var badge = document.createElement('div');
+        badge.className = 'delta ' + (delta > 0 ? 'up' : 'down');
+        badge.textContent = (delta > 0 ? '+' : '−') + yen(Math.abs(delta));
+        card.appendChild(badge);
+      }
+
+      board.appendChild(card);
+    });
+  }
+
+  function meter(label, ratio, text, extra) {
+    var el = document.createElement('div');
+    el.className = 'meter ' + (extra || '');
+    el.innerHTML = '<span></span><span class="bar"><i></i></span><span class="num"></span>';
+    el.children[0].textContent = label;
+    el.querySelector('i').style.width = (Math.max(0, Math.min(1, ratio)) * 100).toFixed(1) + '%';
+    el.querySelector('.num').textContent = text;
+    return el;
+  }
+
+  // ---------- 評価行列 ----------
+  function renderMatrix() {
+    var pane = $('pane-matrix');
+    pane.textContent = '';
+
+    if (game.currency.kind !== 'picsy') {
+      pane.innerHTML = '<p class="note">SECSY には評価行列がない。お金はただの残高で、誰から誰へ渡ったかは価値の伝播に影響しない。PICSY に切り替えると、取引の履歴そのものが行列として現れる。</p>';
+      return;
+    }
+
+    var seats = game.marketSeats;
+    var note = document.createElement('p');
+    note.className = 'note';
+    note.innerHTML = '行が「評価する人」、列が「評価される人」。左端の<code>中央銀行</code>列が予算制約 <code>E_i0</code> で、' +
+      '取引のたびに買い手の行からその分が売り手の列へ移る(式4.36, 4.37)。濃さが評価の大きさ。' +
+      (seats > 1 ? '市場は行列のなかでは' + seats + '席ぶんあるので、ここでは貢献度で重みづけして1行にまとめてある(まとめても行和は1)。' : '');
+    pane.appendChild(note);
+
+    var matrix = game.currency.aggregateMatrix();
+    var contribution = game.currency.aggregateContribution();
+    var names = ['中央銀行'].concat(game.players.map(function (p) { return p.name; }));
+
+    var scroll = document.createElement('div');
+    scroll.className = 'scroll';
+    var table = document.createElement('table');
+
+    var thead = document.createElement('thead');
+    var hrow = document.createElement('tr');
+    hrow.appendChild(cellOf('th', '評価者 ＼ 評価先'));
+    names.forEach(function (name, j) {
+      var th = cellOf('th', name);
+      if (j === 0) th.className = 'bankcol';
+      hrow.appendChild(th);
+    });
+    thead.appendChild(hrow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    names.forEach(function (name, i) {
+      var tr = document.createElement('tr');
+      if (i === 0) tr.className = 'bankrow';
+      tr.appendChild(cellOf('th', name));
+      for (var j = 0; j < names.length; j++) {
+        var value = matrix[i][j];
+        var td = document.createElement('td');
+        td.className = 'cell' + (j === 0 ? ' bankcol' : '') + (value < 0.0005 ? ' zero' : '');
+        var fill = document.createElement('i');
+        fill.style.opacity = (value < 0.0005) ? 0 : (0.1 + 0.55 * Math.min(1, value)).toFixed(3);
+        td.appendChild(fill);
+        var span = document.createElement('span');
+        span.textContent = value < 0.0005 ? '·' : value.toFixed(3);
+        td.appendChild(span);
+        tr.appendChild(td);
+      }
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    scroll.appendChild(table);
+    pane.appendChild(scroll);
+
+    var cvec = document.createElement('div');
+    cvec.className = 'cvec';
+    names.forEach(function (name, i) {
+      var box = document.createElement('div');
+      box.innerHTML = '貢献度 ' + name + ' <b>' + contribution[i].toFixed(4) + '</b>';
+      cvec.appendChild(box);
+    });
+    pane.appendChild(cvec);
+  }
+
+  function cellOf(tag, text) {
+    var el = document.createElement(tag);
+    el.textContent = text;
+    return el;
+  }
+
+  // ---------- ランキング比較(図3.9) ----------
+  function renderRank() {
+    var pane = $('pane-rank');
+    pane.textContent = '';
+
+    var note = document.createElement('p');
+    note.className = 'note';
+    pane.appendChild(note);
+
+    if (!game.shadow) {
+      note.textContent = 'いまは SECSY なので比較する相手がいない。PICSY に切り替えると、同じ取引を通常の決済貨幣でしたときの順位を並べて表示する。';
+      var only = rankList('SECSY の順位', game.ranking(), null, false);
+      pane.appendChild(only);
+      return;
+    }
+
+    note.innerHTML = '図3.9 と同じ比較。左は伝播のある PICSY、右は同じ取引をそのまま通常の決済貨幣でしたときの残高。売った人だけでなく、その人に材料を売った国まで順位が動く。';
+
+    var picsy = game.ranking();
+    var secsy = game.ranking(game.shadow);
+    var place = {};
+    secsy.forEach(function (row, i) { place[row.player.name] = i; });
+
+    var wrap = document.createElement('div');
+    wrap.className = 'compare';
+    wrap.appendChild(rankList('PICSY効果あり', picsy, place, true));
+    wrap.appendChild(rankList('PICSY効果なし(SECSY)', secsy, null, false));
+    pane.appendChild(wrap);
+  }
+
+  function rankList(title, rows, comparePlace, isPicsy) {
+    var box = document.createElement('div');
+    box.className = 'rank' + (isPicsy ? ' picsy' : '');
+    var h = document.createElement('h3');
+    h.textContent = title;
+    box.appendChild(h);
+
+    var ol = document.createElement('ol');
+    rows.forEach(function (row, i) {
+      var li = document.createElement('li');
+      li.innerHTML = '<span class="pos"></span><span class="who"></span><span class="amt"></span><span class="mv"></span>';
+      li.children[0].textContent = (i + 1);
+      li.children[1].textContent = row.player.name;
+      li.children[2].textContent = yen(row.money);
+      if (comparePlace) {
+        var shift = comparePlace[row.player.name] - i;
+        if (shift !== 0) {
+          li.children[3].textContent = (shift > 0 ? '▲' : '▼') + Math.abs(shift);
+          li.children[3].className = 'mv ' + (shift > 0 ? 'up' : 'down');
+        }
+      }
+      ol.appendChild(li);
+    });
+    box.appendChild(ol);
+    return box;
+  }
+
+  // ---------- 財と道具 ----------
+  function renderRef() {
+    var pane = $('pane-ref');
+    pane.textContent = '';
+
+    var note = document.createElement('p');
+    note.className = 'note';
+    note.innerHTML = '図3.7 の市場価格。価格は本文どおりゲームマスターが途中で変えられる。';
+    pane.appendChild(note);
+
+    var grid = document.createElement('div');
+    grid.className = 'ref';
+    P.PRODUCTS.forEach(function (product) {
+      var art = document.createElement('article');
+      var h = document.createElement('h3');
+      h.textContent = product.name;
+      art.appendChild(h);
+      var price = document.createElement('div');
+      price.className = 'price';
+      price.textContent = '$' + yen(game.priceOf(product.name));
+      art.appendChild(price);
+
+      var dl = document.createElement('dl');
+      dl.innerHTML = '<dt>かたち</dt><dd></dd><dt>必要な道具</dt><dd></dd><dt>資源</dt><dd></dd>';
+      var dds = dl.querySelectorAll('dd');
+      dds[0].textContent = product.note;
+      dds[1].textContent = product.tools.join('・');
+      dds[2].textContent = P.PAPER + product.paper + '枚';
+      art.appendChild(dl);
+
+      var edit = document.createElement('div');
+      edit.className = 'priceedit';
+      var input = document.createElement('input');
+      input.type = 'number';
+      input.min = '1';
+      input.step = '10';
+      input.value = game.priceOf(product.name);
+      input.id = 'price-' + product.name;
+      var apply = document.createElement('button');
+      apply.type = 'button';
+      apply.className = 'mini';
+      apply.textContent = '価格を変える';
+      apply.addEventListener('click', function () {
+        run(function () { game.setPrice(product.name, Number(input.value)); },
+            product.name + ' の市場価格を ' + yen(Number(input.value)) + 'ドルにした');
+      });
+      edit.appendChild(input);
+      edit.appendChild(apply);
+      art.appendChild(edit);
+
+      grid.appendChild(art);
+    });
+    pane.appendChild(grid);
+
+    var boughtNames = Object.keys(game.bought);
+    if (boughtNames.length) {
+      var tally = document.createElement('p');
+      tally.className = 'note';
+      tally.style.marginTop = '16px';
+      tally.textContent = '市場がこれまでに買い取った財: ' + boughtNames.map(function (name) {
+        return name + '×' + game.bought[name];
+      }).join('、');
+      pane.appendChild(tally);
+    }
+
+    var head = document.createElement('h3');
+    head.className = 'ref-head';
+    head.textContent = '各国に配る物';
+    pane.appendChild(head);
+
+    var hand = document.createElement('p');
+    hand.className = 'note';
+    hand.textContent = '準備のための一覧。アプリはこれを追跡しないので、受け渡しは机の上で自由にしてよい。';
+    pane.appendChild(hand);
+
+    var scroll = document.createElement('div');
+    scroll.className = 'scroll';
+    var table = document.createElement('table');
+    var columns = ['国', 'タイプ'].concat(P.TOOLS).concat([P.PAPER]);
+    var thead = document.createElement('thead');
+    var hrow = document.createElement('tr');
+    columns.forEach(function (name) { hrow.appendChild(cellOf('th', name)); });
+    thead.appendChild(hrow);
+    table.appendChild(thead);
+
+    var tbody = document.createElement('tbody');
+    game.countries.forEach(function (country) {
+      var tr = document.createElement('tr');
+      tr.appendChild(cellOf('th', country.name));
+      tr.appendChild(cellOf('td', country.kind));
+      P.TOOLS.concat([P.PAPER]).forEach(function (item) {
+        var td = cellOf('td', country.items[item] ? String(country.items[item]) : '·');
+        if (!country.items[item]) td.className = 'zero';
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+    scroll.appendChild(table);
+    pane.appendChild(scroll);
+  }
+
+  // ---------- 履歴 ----------
+  function renderLog() {
+    var pane = $('pane-log');
+    pane.textContent = '';
+    var list = document.createElement('ul');
+    list.className = 'log';
+    if (!game.log.length) {
+      list.innerHTML = '<li><span class="d">—</span><span>まだ何も起きていない。まずは先進国が途上国から紙を買うところから。</span></li>';
+    }
+    game.log.slice().reverse().forEach(function (entry) {
+      var li = document.createElement('li');
+      li.innerHTML = '<span class="d"></span><span class="t"></span>';
+      li.children[0].textContent = entry.no ? '#' + entry.no : '—';
+      li.children[1].textContent = entry.text;
+      list.appendChild(li);
+    });
+    pane.appendChild(list);
+  }
+
+  // ---------- 取引コンソール ----------
+  function fillSelect(select, entries, keep) {
+    var previous = keep ? select.value : null;
+    select.textContent = '';
+    entries.forEach(function (entry) {
+      var option = document.createElement('option');
+      option.value = entry.value;
+      option.textContent = entry.label;
+      select.appendChild(option);
+    });
+    if (previous !== null && select.querySelector('option[value="' + previous + '"]')) {
+      select.value = previous;
+    }
+  }
+
+  function playerEntries(includeMarket) {
+    var entries = [];
+    game.players.forEach(function (player, index) {
+      if (!includeMarket && player.isMarket) return;
+      entries.push({ value: String(index), label: player.name + '(' + player.kind + ')' });
+    });
+    return entries;
+  }
+
+  function renderConsole() {
+    fillSelect($('buyer'), playerEntries(true), true);
+    fillSelect($('seller'), playerEntries(true), true);
+    if ($('buyer').value === $('seller').value) {
+      $('seller').value = String((Number($('buyer').value) + 2) % game.players.length);
+    }
+    fillSelect($('m-country'), playerEntries(false), true);
+    fillSelect($('m-product'), P.PRODUCTS.map(function (product) {
+      return { value: product.name, label: product.name + ' $' + yen(game.priceOf(product.name)) };
+    }), true);
+    updateMarketTotal();
+  }
+
+  function updateMarketTotal() {
+    var product = $('m-product').value || P.PRODUCTS[0].name;
+    var qty = Math.max(1, Math.floor(Number($('m-qty').value) || 1));
+    $('m-total').textContent = '$' + yen(game.priceOf(product) * qty);
+  }
+
+  // ---------- 全体 ----------
+  function render() {
+    $('trade-count').textContent = game.trades + '回';
+    var until = game.untilRecovery();
+    $('recov').textContent = until === null
+      ? '自然回収は手動のみ'
+      : '次の自然回収まで あと' + until + '回';
+    $('mode-picsy').setAttribute('aria-pressed', String(game.mode === 'picsy'));
+    $('mode-secsy').setAttribute('aria-pressed', String(game.mode === 'secsy'));
+    $('gamma-wrap').hidden = game.mode !== 'picsy';
+    $('gamma').value = String(game.gamma);
+    $('gamma-out').textContent = Number(game.gamma).toFixed(2);
+
+    renderBoard();
+    renderConsole();
+    renderMatrix();
+    renderRank();
+    renderRef();
+    renderLog();
+  }
+
+  function run(action, message) {
+    try {
+      var result = action();
+      setNotice(typeof result === 'string' ? result : message, false);
+      save();
+      render();
+    } catch (error) {
+      game.lastEffect = [];
+      setNotice(error.message, true);
+      render();
+    }
+  }
+
+  function setupError(message) {
+    $('su-notice').textContent = message;
+    $('su-notice').className = 'notice err';
+  }
+
+  function selectTab(name) {
+    activeTab = name;
+    ['matrix', 'rank', 'ref', 'log'].forEach(function (key) {
+      $('tab-' + key).setAttribute('aria-selected', String(key === name));
+      $('pane-' + key).hidden = key !== name;
+    });
+  }
+
+  // ---------- 入力 ----------
+  function wire() {
+    $('m-product').addEventListener('change', updateMarketTotal);
+    $('m-qty').addEventListener('input', updateMarketTotal);
+
+    $('do-buy').addEventListener('click', function () {
+      var country = Number($('m-country').value);
+      var product = $('m-product').value;
+      var qty = Math.max(1, Math.floor(Number($('m-qty').value) || 1));
+      run(function () {
+        var result = game.buyFromMarket(country, product, qty);
+        return '市場が ' + game.players[country].name + ' から ' + product + '×' + qty
+          + ' を ' + yen(result.total) + 'ドルで買い取った'
+          + (result.recovered ? '。自然回収も起きた' : '');
+      });
+    });
+
+    $('do-trade').addEventListener('click', function () {
+      var buyer = Number($('buyer').value);
+      var seller = Number($('seller').value);
+      var price = Number($('price').value);
+      var memo = $('memo').value.trim();
+      run(function () {
+        var recovered = game.trade(buyer, seller, price, memo);
+        $('memo').value = '';
+        return game.players[buyer].name + ' が ' + game.players[seller].name + ' に '
+          + yen(price) + 'ドル払った' + (memo ? '(' + memo + ')' : '')
+          + (recovered ? '。自然回収も起きた' : '');
+      });
+    });
+
+    $('do-recovery').addEventListener('click', function () {
+      run(function () {
+        game.runRecovery();
+        return '自然回収が起きた。使った評価が γ=' + Number(game.gamma).toFixed(2)
+          + ' のぶんだけ予算制約に戻る';
+      });
+    });
+
+    $('reset').addEventListener('click', function () {
+      startNew(game.settings());
+      draft = game.settings();
+      setNotice('同じ設定で最初から始めた', false);
+      render();
+    });
+
+    $('settings').addEventListener('click', function () {
+      openSetup(game.settings());
+      $('su-notice').textContent = 'ここではじめ直すと、いまの進行状況は消える。';
+      $('su-notice').className = 'notice ok';
+    });
+
+    ['picsy', 'secsy'].forEach(function (mode) {
+      $('mode-' + mode).addEventListener('click', function () {
+        if (!game || game.mode === mode) return;
+        var settings = game.settings();
+        settings.mode = mode;
+        startNew(settings);
+        draft = game.settings();
+        setNotice(mode === 'picsy'
+          ? 'PICSY で最初から。取引のたびに価値が伝播する'
+          : 'SECSY で最初から。お金は残高として動くだけになる', false);
+        render();
+      });
+    });
+
+    // ---- 設定画面 ----
+    ['picsy', 'secsy'].forEach(function (mode) {
+      $('su-' + mode).addEventListener('click', function () {
+        draft.mode = mode;
+        renderSetup();
+      });
+    });
+
+    $('su-gamma').addEventListener('input', function () {
+      draft.gamma = Number(this.value);
+      $('su-gamma-out').textContent = draft.gamma.toFixed(2);
+    });
+
+    $('su-market').addEventListener('input', function () {
+      var money = Math.max(P.INITIAL_MONEY, Number(this.value) || P.INITIAL_MONEY);
+      draft.marketSeats = Math.max(1, Math.round(money / P.INITIAL_MONEY));
+    });
+    $('su-market').addEventListener('change', renderSetup);
+
+    $('su-every').addEventListener('input', function () {
+      draft.recoveryEvery = Math.max(0, Math.min(20, Math.floor(Number(this.value) || 0)));
+    });
+    $('su-every').addEventListener('change', renderSetup);
+
+    $('su-add').addEventListener('click', function () {
+      if (draft.countries.length >= 12) {
+        $('su-notice').textContent = '国は12までにしてください';
+        $('su-notice').className = 'notice err';
+        return;
+      }
+      draft.countries.push({ name: nextCountryName(), kind: '最貧国', items: { '紙': 1, 'ペン': 1 } });
+      renderSetup();
+    });
+
+    $('su-reset').addEventListener('click', function () {
+      draft = P.defaultSettings();
+      draft.mode = game ? game.mode : 'picsy';
+      renderSetup();
+    });
+
+    $('su-start').addEventListener('click', function () {
+      var names = {};
+      for (var i = 0; i < draft.countries.length; i++) {
+        var country = draft.countries[i];
+        if (!country.name) { return setupError('国名が空の行があります'); }
+        if (country.name === '市場') { return setupError('「市場」は市場役の名前なので使えません'); }
+        if (names[country.name]) { return setupError('国名が重複しています: ' + country.name); }
+        names[country.name] = true;
+      }
+      if (draft.countries.length < 2) return setupError('国は2つ以上にしてください');
+
+      startNew(draft);
+      draft = game.settings();
+      showView('game');
+      render();
+      setNotice('設定を反映して始めた。市場の初期資金は ' + yen(game.marketMoney) + 'ドル。', false);
+    });
+
+    $('gamma').addEventListener('input', function () {
+      $('gamma-out').textContent = Number(this.value).toFixed(2);
+    });
+    $('gamma').addEventListener('change', function () {
+      var value = Number(this.value);
+      game.gamma = value;
+      if (game.currency.kind === 'picsy') game.currency.ledger.gamma = value;
+      save();
+      setNotice('自然回収率を γ=' + value.toFixed(2) + ' にした', false);
+    });
+
+    ['matrix', 'rank', 'ref', 'log'].forEach(function (key) {
+      $('tab-' + key).addEventListener('click', function () { selectTab(key); });
+    });
+  }
+
+  // ---------- 起動 ----------
+  var booted = false;
+
+  function boot(hot) {
+    if (booted) return;
+    booted = true;
+    try {
+      game = (hot && hot.state && P.Game.fromJSON(hot.state)) || load();
+      draft = game ? game.settings() : P.defaultSettings();
+      wire();
+      selectTab((hot && hot.tab) || activeTab);
+
+      if (!game) {
+        // はじめての起動は設定画面から。設定はあとから変えられる。
+        openSetup(P.defaultSettings());
+      } else {
+        showView('game');
+        render();
+        if (!game.log.length) {
+          setNotice('先進国A・Bは道具をもつが紙が1枚。途上国C・Dは紙20枚だがはさみがない。まず貿易から。', false);
+        }
+      }
+    } catch (error) {
+      // 黙って白い画面になるのがいちばん困るので、理由を画面に出す
+      booted = false;
+      showFailure(error);
+    }
+  }
+
+  function showFailure(error) {
+    var box = document.createElement('div');
+    box.className = 'console';
+    box.innerHTML = '<h2>起動できなかった</h2><p class="notice err"></p>' +
+      '<p class="legend"><span>ページを再読み込みしても直らないときは、保存データを捨ててやりなおせる。</span></p>';
+    box.querySelector('.notice').textContent = String((error && error.message) || error);
+    var again = document.createElement('button');
+    again.type = 'button';
+    again.className = 'act';
+    again.textContent = '保存データを捨ててやりなおす';
+    again.addEventListener('click', function () {
+      try { localStorage.removeItem(SAVE_KEY); } catch (e) { /* 消せなくても続行 */ }
+      box.remove();
+      boot({});
+    });
+    box.appendChild(again);
+    var board = $('board');
+    board.parentNode.insertBefore(box, board);
+  }
+
+  var hotData = {};
+  try {
+    var hot = window.claude && window.claude.hot;
+    if (hot && typeof hot.snapshot === 'function') {
+      hot.snapshot(function () {
+        return { state: game ? game.toJSON() : null, tab: activeTab };
+      });
+    }
+    if (hot && typeof hot.ready === 'function') {
+      hot.ready(boot);
+      // ready が呼び返してこなくても画面が死なないようにしておく
+      setTimeout(function () { boot(hotData); }, 1500);
+    } else {
+      boot((hot && hot.data) || hotData);
+    }
+  } catch (error) {
+    boot(hotData);
+  }
+})();
+</script>
