@@ -27,6 +27,13 @@ python tests/test_model.py
 - GitHub Pages: https://ekkekuru2.github.io/picsy-trading-game/
   (`main` に push すると `.github/workflows/pages.yml` が `build.py` を
   走らせて公開する)
+
+  最初の一度だけ、リポジトリの **Settings → Pages → Source** を
+  「GitHub Actions」にしておく必要がある。ここが未設定のまま走らせると
+  `Resource not accessible by integration` で失敗する。
+  それでも直らないときは **Settings → Actions → General →
+  Workflow permissions** が「Read and write permissions」になっているか、
+  private リポジトリなら Pages が使えるプランかを確認する。
 - Claude の Artifact: https://claude.ai/artifact/P2NW8echnKSYMvUffSzqYr
 
 ソースは `src/web/`。`picsy.js` が `src/picsy.py` / `src/currency.py` /
