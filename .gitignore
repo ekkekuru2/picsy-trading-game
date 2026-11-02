@@ -1,3 +1,9 @@
-
 .direnv/
 
+__pycache__/
+
+# build.py が組み立てる公開用の1枚もの
+src/web/dist/
+
+# 本文を読むために撮った紙面の写真。著作物なのでリポジトリには入れない
+book_image/
