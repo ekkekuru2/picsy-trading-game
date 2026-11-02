@@ -22,7 +22,12 @@ python tests/test_model.py
 
 ## web版
 
-公開先: https://claude.ai/artifact/P2NW8echnKSYMvUffSzqYr
+公開先:
+
+- GitHub Pages: https://ekkekuru2.github.io/picsy-trading-game/
+  (`main` に push すると `.github/workflows/pages.yml` が `build.py` を
+  走らせて公開する)
+- Claude の Artifact: https://claude.ai/artifact/P2NW8echnKSYMvUffSzqYr
 
 ソースは `src/web/`。`picsy.js` が `src/picsy.py` / `src/currency.py` /
 `src/game.py` を移植したモデルで、固有ベクトルだけ numpy が使えないぶん

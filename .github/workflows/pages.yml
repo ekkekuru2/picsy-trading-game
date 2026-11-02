@@ -1,0 +1,51 @@
+# web版を GitHub Pages に公開する。
+# dist/ はリポジトリに入れていないので、ここで build.py を走らせて組み立てる。
+name: Deploy to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# 公開中に別の公開が走らないようにする
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # picsy.js を index.html に埋め込んだ1枚ものを src/web/dist/ に書き出す
+      - name: 公開用のページを組み立てる
+        run: python src/web/build.py
+
+      - uses: actions/configure-pages@v5
+        with:
+          # Pages がまだ有効でなければ、ここで有効にする
+          enablement: true
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: src/web/dist
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
